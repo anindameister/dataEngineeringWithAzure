@@ -11,29 +11,29 @@
 - You are being provided a relational schema that describes the data as it exists in PostgreSQL. 
 ![relational schema that describes the data as it exists in PostgreSQL](https://github.com/anindameister/dataEngineeringWithAzure/blob/main/divvy-erd.png)
     - Tables:
-        - Rider:
+        - Rider: DimRider
             - rider_id (INT PRIMARY KEY)
             - address (VARCHAR)
             - first (VARCHAR)
             - last (VARCHAR)
             - birthday (date)
             - account_number (INT FOREIGN KEY REFERENCES Account(account_number))
-        - Account:
+        - Account: DimAccount
             - account_number (INT PRIMARY KEY)
             - member (bool)
             - start_date (date)
             - end_date (date)
-        - Payment:
+        - Payment: DimPayment
             - payment_id (INT PRIMARY KEY)
             - date (date)
             - amount (decimal)
             - account_number (INT FOREIGN KEY REFERENCES Account(account_number)) 
-        - Station:
+        - Station: DimStation
             - station_id (varchar PRIMARY KEY)
             - name (varchar)
             - latitude (float)
             - longitude (float)
-        - Trip:
+        - Trip: DimTrip
             - trip_id (varchar PRIMARY KEY)
             <!-- There's a minor type mismatch for the rideable_type field in the Trip table, which should be VARCHAR to match the diagram instead of string. -->
             - rideable_type (string)
@@ -45,8 +45,23 @@
             <!-- The foreign key in the Trip table should be rider_id, not member_id, to match the rider_id primary key in the Rider table according to the diagram. -->
             - member_id (INT FOREIGN KEY REFERENCES Rider(rider_id)) 
 
-            
+ - DimRider(rider_id),DimAccount(account_number),DimPayment(payment_id),DimStation(station_id),DimTrip(trip_id)
+ - rider_id, account_number, payment_id, station_id, and trip_id would serve as primary keys in their respective dimension tables. These primary keys uniquely identify rows in each dimension table and would then be used as foreign keys in a central fact table, linking the fact table to each of the dimension tables. This setup allows for efficient querying and analysis of the data across different dimensions.
+- my dimension tables are
+    - DimRider
+            - rider_id (INT PRIMARY KEY)
+            - address (VARCHAR)
+            - first (VARCHAR)
+            - last (VARCHAR)
+            - birthday (date)
+            - account_number 
+            - member (bool)
+            - start_date (date)
+            - end_date (date)
+- 
+Your design for the DimRider dimension table in a star schema includes both attributes specific to the rider (such as rider_id, address, first, last, birthday) and attributes related to the rider's account (account_number, member, start_date, end_date). This is somewhat correct, but typically in a star schema, dimension tables are more focused.
 
+Combining rider and account information into one dimension table can work, especially if account_number directly relates to the rider and doesn't require a separate dimension for analysis. However, if account_number links to distinct account characteristics or behaviors that are independent of individual riders, you might consider keeping Account as a separate dimension table for clarity and analytical flexibility.
            
 
 
