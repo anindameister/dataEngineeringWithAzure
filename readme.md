@@ -90,3 +90,20 @@
         - start_station_id (INT)
         - end_station_id (INT)
 
+Based on your descriptions, Task 2, which involves designing a star schema using fact and dimension tables, appears to have been conceptually addressed with the definition of your dimension tables (DimRider, DimAccount, DimPayment, DimStation, DimTrip) and your fact table (FactRental). This schema aligns with the principles of a star schema for data warehousing, focusing on a central fact table related to multiple dimension tables that describe various entities.
+
+For Task 3, here's a concise guide:
+
+Download Python Script: Obtain ProjectDataToPostgres.py from the provided GitHub link.
+Download Data Files: Get the data files from classroom resources.
+Edit Script in VS Code:
+Open the ProjectDataToPostgres.py script in Visual Studio Code (VS Code).
+Fill in your PostgreSQL database's host, username, and password information within the script.
+Run the Script:
+Execute the script in a command line or terminal to load data into your PostgreSQL database.
+Ensure Python is installed on your machine and you're in the directory containing the script.
+Verify Data Upload:
+Use pgAdmin or another PostgreSQL tool to check that the data from all four files has been correctly uploaded to your PostgreSQL database.
+This task simulates setting up an OLTP (Online Transaction Processing) system environment in PostgreSQL, replicating a production scenario for data usage.
+
+need to take care of pgadmin
