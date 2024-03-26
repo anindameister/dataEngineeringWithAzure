@@ -48,29 +48,36 @@
  - DimRider(rider_id),DimAccount(account_number),DimPayment(payment_id),DimStation(station_id),DimTrip(trip_id)
  - rider_id, account_number, payment_id, station_id, and trip_id would serve as primary keys in their respective dimension tables. These primary keys uniquely identify rows in each dimension table and would then be used as foreign keys in a central fact table, linking the fact table to each of the dimension tables. This setup allows for efficient querying and analysis of the data across different dimensions.
 - my dimension tables are
-    - DimRider
+
+        - Rider: DimRider
             - rider_id (INT PRIMARY KEY)
             - address (VARCHAR)
             - first (VARCHAR)
             - last (VARCHAR)
             - birthday (date)
-            - account_number 
+
+        - Account: DimAccount
+            - account_number (INT PRIMARY KEY)
             - member (bool)
             - start_date (date)
             - end_date (date)
+
+        - Payment: DimPayment
+            - payment_id (INT PRIMARY KEY)
+            - date (date)
+            - amount (decimal)
+
+        - Station: DimStation
+            - station_id (varchar PRIMARY KEY)
+            - name (varchar)
+            - latitude (float)
+            - longitude (float)
+
+        - Trip: DimTrip
+            - trip_id (varchar PRIMARY KEY)
+            <!-- There's a minor type mismatch for the rideable_type field in the Trip table, which should be VARCHAR to match the diagram instead of string. -->
+            - rideable_type (string)
+            - started_at (datetime)
+            - ended_at (datetime)
 - 
-Your design for the DimRider dimension table in a star schema includes both attributes specific to the rider (such as rider_id, address, first, last, birthday) and attributes related to the rider's account (account_number, member, start_date, end_date). This is somewhat correct, but typically in a star schema, dimension tables are more focused.
-
-Combining rider and account information into one dimension table can work, especially if account_number directly relates to the rider and doesn't require a separate dimension for analysis. However, if account_number links to distinct account characteristics or behaviors that are independent of individual riders, you might consider keeping Account as a separate dimension table for clarity and analytical flexibility.
-           
-
-
-
-           
-
-
-
-
-
-- In addition, you have been given a set of business requirements related to the data warehouse. 
-    - You are being asked to design a star schema using fact and dimension tables.
+Your adjustment to the dimension tables by removing foreign keys and focusing each table on its core entity is correct for the star schema approach. This structure aligns with star schema principles where dimension tables are designed to describe entities in detail without direct links between them. Each table now correctly focuses on a specific aspect of the data model, such as rider information, account details, payment records, station specifics, and trip data. The only adjustment needed is to ensure data types are consistent across your schema, like changing rideable_type in DimTrip from string to VARCHAR for SQL data type consistency.
