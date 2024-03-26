@@ -79,5 +79,14 @@
             - rideable_type (string)
             - started_at (datetime)
             - ended_at (datetime)
-- 
-Your adjustment to the dimension tables by removing foreign keys and focusing each table on its core entity is correct for the star schema approach. This structure aligns with star schema principles where dimension tables are designed to describe entities in detail without direct links between them. Each table now correctly focuses on a specific aspect of the data model, such as rider information, account details, payment records, station specifics, and trip data. The only adjustment needed is to ensure data types are consistent across your schema, like changing rideable_type in DimTrip from string to VARCHAR for SQL data type consistency.
+- my fact table
+    - FactRental
+        - rental_id (INT PRIMARY KEY)
+        - rider_id (INT)
+        - account_number (INT)
+        - payment_id (INT)
+        - trip_id (INT)
+        <!-- Ensure the data types for start_station_id and end_station_id in FactRental match the data type of station_id in DimStation (which should be VARCHAR, not INT as currently listed) for proper relational integrity. -->
+        - start_station_id (INT)
+        - end_station_id (INT)
+
