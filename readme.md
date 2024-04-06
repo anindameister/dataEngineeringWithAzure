@@ -606,7 +606,10 @@ CREATE TABLE DimRider (
     address VARCHAR(255),
     first VARCHAR(100),
     last VARCHAR(100),
-    birthday DATE
+    birthday DATE,
+    account_start_date DATE,
+    account_end_date DATE,
+    is_member BOOLEAN
 );
 ```
 ```
@@ -637,19 +640,25 @@ CREATE TABLE DimAccount (
 ```
 - insert
 ```
-INSERT INTO DimAccount (account_number,member,start_date,end_date)
+INSERT INTO DimRider (rider_id,address,first,last,birthday,account_start_date,account_end_date,is_member)
 SELECT
-    account_number AS account_number, 
-    member AS member,
-    start_date AS start_date,  
-    end_date AS end_date,
+    rider_id AS rider_id, 
+    address AS address,
+    first AS first,  
+    last AS last,
+    birthday AS birthday,
+    account_start_date AS account_start_date,
+    account_end_date AS account_end_date,
+    is_member AS is_member
+
 FROM
     Rider;
 
 ```
 ![account and rider table are just one](https://github.com/anindameister/dataEngineeringWithAzure/blob/main/rowdata2columndata.JPG)
 
-![account and rider table are just one](https://github.com/anindameister/dataEngineeringWithAzure/blob/main/rowdata2columndata4rider.JPG)
+![account and rider table are just one](https://github.com/anindameister/dataEngineeringWithAzure/blob/main/endOf6April2024.JPG)
+
 
   - Payment: DimPayment
       - payment_id (INT PRIMARY KEY)
