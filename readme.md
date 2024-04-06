@@ -644,10 +644,13 @@ SELECT
     start_date AS start_date,  
     end_date AS end_date,
 FROM
-    Account;
+    Rider;
 
 ```
 ![account and rider table are just one](https://github.com/anindameister/dataEngineeringWithAzure/blob/main/rowdata2columndata.JPG)
+
+![account and rider table are just one](https://github.com/anindameister/dataEngineeringWithAzure/blob/main/rowdata2columndata4rider.JPG)
+
   - Payment: DimPayment
       - payment_id (INT PRIMARY KEY)
       - date (date)
