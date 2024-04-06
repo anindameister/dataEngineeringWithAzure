@@ -296,3 +296,59 @@ Sure, here are the steps to load the data from Azure Blob Storage into external 
 After following these steps, you will have successfully loaded the data from Azure Blob Storage into external tables in the serverless SQL pool of your Azure Synapse Analytics workspace. You can then query or transform the data as needed.
 
 Note: Make sure to replace `YourDatabaseName`, `YourExternalTableName`, and `YourInternalTableName` with the actual names you want to use for your database, external table, and internal table, respectively.
+
+Sure, here are the steps to transform the data from the staging tables to the final star schema using CREATE EXTERNAL TABLE AS SELECT (CETAS) in the serverless SQL pool:
+
+1. **Create a new SQL script**:
+   - In the Synapse Studio, go to the "Develop" hub.
+   - Expand the "SQL script" section on the left.
+   - Click on the "+" icon to create a new SQL script.
+
+2. **Define the star schema tables**:
+   - In the SQL script, create the dimension and fact tables using CETAS statements.
+   - For each dimension table, use a CETAS statement to select and transform the relevant data from the staging tables:
+     ```sql
+     CREATE EXTERNAL TABLE DimTableName
+     WITH (
+         LOCATION = 'path/to/output/folder/',
+         DATA_SOURCE = YourDataSourceName,
+         FILE_FORMAT = YourFileFormatName
+     )
+     AS SELECT
+         -- Select and transform columns for the dimension table
+         FROM staging_tables
+         -- Add any necessary filtering or transformations
+     ;
+     ```
+   - For the fact table, use a CETAS statement to select and transform the relevant data from the staging tables, including joins with the dimension tables:
+     ```sql
+     CREATE EXTERNAL TABLE FactTableName
+     WITH (
+         LOCATION = 'path/to/output/folder/',
+         DATA_SOURCE = YourDataSourceName,
+         FILE_FORMAT = YourFileFormatName
+     )
+     AS SELECT
+         -- Select and transform columns for the fact table
+         -- Join with dimension tables as needed
+         FROM staging_tables
+         -- Add any necessary filtering or transformations
+     ;
+     ```
+
+3. **Replace placeholders with actual values**:
+   - Replace `DimTableName` and `FactTableName` with the names you want to use for your dimension and fact tables, respectively.
+   - Replace `'path/to/output/folder/'` with the path to the folder in your Azure Blob Storage where you want to store the output files.
+   - Replace `YourDataSourceName` with the name of the linked service you created for your Azure Blob Storage account.
+   - Replace `YourFileFormatName` with the name of the file format you created earlier.
+
+4. **Execute the SQL script**:
+   - Once you have defined all the CETAS statements for your star schema tables, execute the SQL script.
+   - The CETAS statements will create the external table metadata and export the transformed data to the specified output folder in your Azure Blob Storage account.
+
+5. **Verify the output**:
+   - After executing the SQL script, you can navigate to the output folder in your Azure Blob Storage account to verify that the files for your star schema tables have been created.
+
+By following these steps, you will have transformed the data from the staging tables to the final star schema using CETAS statements in the serverless SQL pool. The transformed data will be stored as external tables in your Azure Blob Storage account, which you can then query or use for further analysis.
+
+Note: If you need to modify the star schema tables or re-run the transformations, you can simply execute the SQL script again. CETAS will overwrite the existing files in the output folder with the new transformed data.
