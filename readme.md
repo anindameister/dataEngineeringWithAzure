@@ -352,6 +352,7 @@ Sure, here are the steps to transform the data from the staging tables to the fi
 By following these steps, you will have transformed the data from the staging tables to the final star schema using CETAS statements in the serverless SQL pool. The transformed data will be stored as external tables in your Azure Blob Storage account, which you can then query or use for further analysis.
 
 Note: If you need to modify the star schema tables or re-run the transformations, you can simply execute the SQL script again. CETAS will overwrite the existing files in the output folder with the new transformed data.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 1. **Relation between pgAdmin and PostgreSQL**:
 pgAdmin is a graphical user interface (GUI) tool used to manage PostgreSQL databases. It provides a user-friendly interface for creating, managing, and interacting with PostgreSQL databases, tables, users, and other objects.
@@ -413,3 +414,64 @@ c. **Programming languages**: You can use programming languages like Python, R, 
 d. **Business Intelligence (BI) tools**: Some BI tools like Metabase, Redash, or Superset can connect to PostgreSQL databases and provide interactive dashboards, visualizations, and analytics capabilities.
 
 While these local options may not offer the same level of performance and scalability as Azure Synapse Analytics, they can still be useful for smaller-scale data analysis and reporting tasks during the development and prototyping phases of your project.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Sure, I can explain how to insert data from existing tables within the same PostgreSQL database into your fact and dimension tables based on your star schema design.
+
+Assuming you have already created the fact and dimension tables with the appropriate structure (columns, data types, primary keys, and foreign keys), you can use INSERT INTO statements with subqueries to populate these tables from the existing data in your staging or source tables.
+
+Here's how you can approach this:
+
+1. **Populating Dimension Tables**:
+To populate a dimension table from an existing table, you can use an INSERT INTO statement with a SELECT subquery. For example, to populate the DimCustomer table from an existing Customers table:
+
+```sql
+INSERT INTO DimCustomer (CustomerKey, CustomerName, CustomerAddress, ...)
+SELECT
+    customer_id AS CustomerKey,
+    customer_name AS CustomerName,
+    customer_address AS CustomerAddress,
+    ... -- Select other relevant columns
+FROM
+    Customers;
+```
+
+This statement selects the relevant columns from the Customers table and inserts them into the DimCustomer table, mapping the column names accordingly.
+
+2. **Populating Fact Table**:
+To populate the fact table, you typically need to join data from multiple source tables and perform necessary transformations. You can use an INSERT INTO statement with a SELECT subquery that performs the required joins and transformations.
+
+```sql
+INSERT INTO FactSales (SalesKey, CustomerKey, ProductKey, SalesAmount, ...)
+SELECT
+    generate_series(1, (SELECT COUNT(*) FROM Orders)) AS SalesKey,
+    c.CustomerKey,
+    p.ProductKey,
+    od.Quantity * od.UnitPrice AS SalesAmount,
+    ... -- Select other relevant columns or derived values
+FROM
+    Orders o
+    JOIN OrderDetails od ON o.OrderID = od.OrderID
+    JOIN DimCustomer c ON o.CustomerID = c.CustomerKey
+    JOIN DimProduct p ON od.ProductID = p.ProductKey;
+```
+
+In this example:
+- The `generate_series` function is used to generate sequential SalesKey values based on the number of rows in the Orders table.
+- The Orders table is joined with the OrderDetails table to get the order and product details.
+- The CustomerKey and ProductKey values are retrieved from the DimCustomer and DimProduct dimension tables, respectively, using joins based on the appropriate foreign key relationships.
+- Derived columns like SalesAmount are calculated based on the data from the source tables.
+
+3. **Handling Data Type Conversions**:
+If the data types of the columns in the source tables do not match the data types of the corresponding columns in the destination fact or dimension tables, you may need to perform explicit data type conversions using appropriate SQL functions or CAST operations.
+
+4. **Handling Null Values**:
+Depending on your requirements, you may need to handle null values in the source data. You can use techniques like COALESCE or ISNULL functions to replace null values with appropriate default values or perform other necessary transformations.
+
+5. **Handling Duplicates**:
+If your source data contains duplicates, and you want to avoid inserting duplicate rows in the fact or dimension tables, you can use the DISTINCT keyword in the SELECT subquery or add appropriate filters or conditions to eliminate duplicates.
+
+6. **Handling Updates and Deletes**:
+If you need to update or delete data in the fact or dimension tables based on changes in the source tables, you can use UPDATE and DELETE statements with subqueries or joins to perform the necessary operations.
+
+By following these steps, you can populate your fact and dimension tables based on your star schema design using the data from existing tables within your PostgreSQL database. Remember to adjust the SQL statements according to your specific table and column names, data types, and relationships.
