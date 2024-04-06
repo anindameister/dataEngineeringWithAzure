@@ -475,3 +475,81 @@ If your source data contains duplicates, and you want to avoid inserting duplica
 If you need to update or delete data in the fact or dimension tables based on changes in the source tables, you can use UPDATE and DELETE statements with subqueries or joins to perform the necessary operations.
 
 By following these steps, you can populate your fact and dimension tables based on your star schema design using the data from existing tables within your PostgreSQL database. Remember to adjust the SQL statements according to your specific table and column names, data types, and relationships.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+  - Rider: DimRider
+      - rider_id (INT PRIMARY KEY)
+      - address (VARCHAR)
+      - first (VARCHAR)
+      - last (VARCHAR)
+      - birthday (date)
+
+```
+CREATE TABLE DimRider (
+    rider_id INT PRIMARY KEY,
+    address VARCHAR(255),
+    first VARCHAR(100),
+    last VARCHAR(100),
+    birthday DATE
+);
+```
+
+  - Account: DimAccount
+      - account_number (INT PRIMARY KEY)
+      - member (bool)
+      - start_date (date)
+      - end_date (date)
+
+```
+CREATE TABLE DimAccount (
+    account_number INT PRIMARY KEY,
+    member BOOLEAN,
+    start_date DATE
+    end_date DATE
+);
+```
+
+  - Payment: DimPayment
+      - payment_id (INT PRIMARY KEY)
+      - date (date)
+      - amount (decimal)
+
+```
+CREATE TABLE DimPayment (
+    payment_id INT PRIMARY KEY,
+    date DATE
+    amount DECIMAL(10, 2) 
+);
+```
+
+  - Station: DimStation
+      - station_id (varchar PRIMARY KEY)
+      - name (varchar)
+      - latitude (float)
+      - longitude (float)
+
+```
+CREATE TABLE DimStation (
+    station_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    latitude FLOAT,
+    longitude FLOAT
+);
+```
+
+  - Trip: DimTrip
+      - trip_id (varchar PRIMARY KEY)
+      <!-- There's a minor type mismatch for the rideable_type field in the Trip table, which should be VARCHAR to match the diagram instead of string. -->
+      - rideable_type (string)
+      - started_at (datetime)
+      - ended_at (datetime)
+
+```
+CREATE TABLE DimTrip (
+    trip_id VARCHAR(100) PRIMARY KEY,
+    rideable_type VARCHAR(100),
+    started_at TIMESTAMP,
+    ended_at TIMESTAMP
+);
+```
+
