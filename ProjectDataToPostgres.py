@@ -4,12 +4,16 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 ########################################
 # Update connection string information #
 ########################################
-host = "<<host>>"
-user = "<<user>>"
-password = "<<password>>"
+# host = "<<host>>"
+host = "localhost"
+# user = "<<user>>"
+user = "postgres"
+# password = "<<password>>"
+password = "@Ninda17071988"
 
 # Create a new DB
-sslmode = "require"
+# sslmode = "require"
+sslmode='disable'
 dbname = "postgres"
 conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(host, user, dbname, password, sslmode)
 conn = psycopg2.connect(conn_string)
