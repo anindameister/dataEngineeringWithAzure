@@ -228,3 +228,71 @@ To upload the data files to Azure Blob Storage, you need to follow these steps:
 After executing the SQL statement, you should have an external table in your Serverless SQL Pool that can query and access the data files stored in Azure Blob Storage.
 
 Note: If you have multiple data files, you'll need to create an external table for each file or use a wildcard to match multiple files (e.g., `'path/to/data/*.txt'`).
+
+
+# Task 5
+Task 5: LOAD the data into external tables in the data warehouse
+Once in Blob storage, the files will be shown in the data lake node in the Synapse Workspace. From here, you can use the script-generating function to load the data from blob storage into external staging tables in the data warehouse you created using the serverless SQL Pool.
+
+Sure, here are the steps to load the data from Azure Blob Storage into external tables in the data warehouse using the serverless SQL pool in Azure Synapse Analytics:
+
+1. **Open the Synapse Studio**:
+   - In the Azure Portal, navigate to your Azure Synapse Analytics workspace.
+   - Click on "Open Synapse Studio" to launch the Synapse Studio.
+
+2. **Create a database in the serverless SQL pool**:
+   - In the Synapse Studio, go to the "Develop" hub.
+   - Expand the "SQL script" section on the left.
+   - Click on the "+" icon to create a new SQL script.
+   - In the script editor, use the following command to create a new database:
+     ```sql
+     CREATE DATABASE YourDatabaseName;
+     ```
+   - Switch to the newly created database using:
+     ```sql
+     USE YourDatabaseName;
+     ```
+
+3. **Create external data sources**:
+   - In the Synapse Studio, go to the "Manage" hub.
+   - Under "External connections," click "Linked services."
+   - Create a new linked service to connect to your Azure Blob Storage account.
+
+4. **Create external file formats**:
+   - In the "Develop" hub, expand the "External resources" section on the left.
+   - Right-click on "File formats" and select "New file format."
+   - Provide a name for the file format (e.g., `TextFileFormat`).
+   - Configure the file format settings based on your data files (delimiter, row terminator, etc.).
+
+5. **Create external tables**:
+   - In the "Develop" hub, expand the "External resources" section on the left.
+   - Right-click on "Data sources" and select "New data source."
+   - Select the linked service you created for Azure Blob Storage.
+   - Right-click on "External tables" and select "Create external table."
+   - Provide a name for the external table.
+   - In the "Select objects" dialog, browse to the location of your data files in Azure Blob Storage.
+   - Select the file(s) you want to load and click "Import."
+   - In the "Create external table" dialog, configure the external table settings:
+     - Select the appropriate file format.
+     - Provide a table schema or use the "Import schema" option if available.
+     - Click "Create and wait" to create the external table.
+
+6. **Load data into the external tables**:
+   - In the "Develop" hub, create a new SQL script.
+   - Use a `SELECT` statement to query the data from the external table:
+     ```sql
+     SELECT * FROM YourExternalTableName;
+     ```
+   - Optionally, you can create internal tables in the serverless SQL pool and insert the data from the external tables:
+     ```sql
+     CREATE TABLE YourInternalTableName (
+         -- Define the table schema here
+     );
+
+     INSERT INTO YourInternalTableName
+     SELECT * FROM YourExternalTableName;
+     ```
+
+After following these steps, you will have successfully loaded the data from Azure Blob Storage into external tables in the serverless SQL pool of your Azure Synapse Analytics workspace. You can then query or transform the data as needed.
+
+Note: Make sure to replace `YourDatabaseName`, `YourExternalTableName`, and `YourInternalTableName` with the actual names you want to use for your database, external table, and internal table, respectively.
