@@ -553,3 +553,26 @@ CREATE TABLE DimTrip (
 );
 ```
 
+my fact table
+
+FactRental
+rental_id (INT PRIMARY KEY)
+rider_id (INT)
+account_number (INT)
+payment_id (INT)
+trip_id (INT)
+start_station_id (INT)
+end_station_id (INT)
+
+
+```
+CREATE TABLE FactRental (
+    rental_id INT PRIMARY KEY,
+    rider_id INT,
+    account_number INT,
+    payment_id INT,
+    trip_id INT,
+    start_station_id INT,
+    end_station_id INT
+);
+```
