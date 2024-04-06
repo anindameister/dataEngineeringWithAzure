@@ -352,3 +352,64 @@ Sure, here are the steps to transform the data from the staging tables to the fi
 By following these steps, you will have transformed the data from the staging tables to the final star schema using CETAS statements in the serverless SQL pool. The transformed data will be stored as external tables in your Azure Blob Storage account, which you can then query or use for further analysis.
 
 Note: If you need to modify the star schema tables or re-run the transformations, you can simply execute the SQL script again. CETAS will overwrite the existing files in the output folder with the new transformed data.
+
+1. **Relation between pgAdmin and PostgreSQL**:
+pgAdmin is a graphical user interface (GUI) tool used to manage PostgreSQL databases. It provides a user-friendly interface for creating, managing, and interacting with PostgreSQL databases, tables, users, and other objects.
+
+PostgreSQL, on the other hand, is an open-source relational database management system (RDBMS). It is the actual database engine that stores and manages the data.
+
+The relationship between pgAdmin and PostgreSQL is that pgAdmin acts as a client tool that connects to and interacts with the PostgreSQL database server. pgAdmin provides a visual interface for executing SQL queries, managing database objects, and performing administrative tasks on the PostgreSQL server.
+
+2. **Inserting data into fact and dimension tables locally**:
+To insert data into your fact and dimension tables based on your star schema design, you can use standard SQL `INSERT` statements in pgAdmin or any other PostgreSQL client tool.
+
+Here's a general approach you can follow:
+
+a. Create the fact and dimension tables in your PostgreSQL database using the appropriate `CREATE TABLE` statements, defining the table structure with columns, data types, primary keys, and foreign keys.
+
+b. Use `INSERT INTO` statements to populate the dimension tables with the relevant data. For example:
+
+```sql
+INSERT INTO DimCustomer (CustomerKey, CustomerName, CustomerAddress, ...)
+VALUES (1, 'John Doe', '123 Main St', ...),
+       (2, 'Jane Smith', '456 Oak Rd', ...),
+       ...;
+```
+
+c. For the fact table, you may need to join data from multiple sources (e.g., staging tables) and perform necessary transformations. You can use a combination of `SELECT` statements with `JOIN` clauses and other SQL operations to shape the data into the desired format for the fact table.
+
+d. Once you have the desired data set, use an `INSERT INTO` statement with a `SELECT` subquery to populate the fact table. For example:
+
+```sql
+INSERT INTO FactSales (SalesKey, CustomerKey, ProductKey, SalesAmount, ...)
+SELECT
+    generate_series(1, 1000) AS SalesKey,
+    c.CustomerKey,
+    p.ProductKey,
+    order_details.Quantity * order_details.UnitPrice AS SalesAmount,
+    ...
+FROM
+    orders
+    JOIN order_details ON orders.OrderID = order_details.OrderID
+    JOIN DimCustomer c ON orders.CustomerID = c.CustomerID
+    JOIN DimProduct p ON order_details.ProductID = p.ProductID;
+```
+
+This example assumes you have staging tables like `orders`, `order_details`, and joined data from the dimension tables `DimCustomer` and `DimProduct`.
+
+Note that `CETAS` is an Azure Synapse Analytics feature and is not available in PostgreSQL. However, you can achieve similar functionality using standard SQL `INSERT INTO` statements with `SELECT` subqueries or `CREATE TABLE AS` statements.
+
+3. **Analytics locally**:
+While Azure Synapse Analytics provides powerful analytics capabilities in the cloud, you can still perform basic data analysis and reporting locally using PostgreSQL and various tools or programming languages.
+
+Here are some options for local analytics:
+
+a. **SQL queries**: You can use SQL queries in pgAdmin or any other PostgreSQL client tool to analyze and aggregate data from your fact and dimension tables. This includes using SQL functions, windowing functions, and various clauses like `GROUP BY`, `HAVING`, `ORDER BY`, etc.
+
+b. **Reporting tools**: There are several open-source and commercial reporting tools that can connect to PostgreSQL databases and generate reports based on your data. Some examples include JasperReports, BIRT, and FreeReportingTool.
+
+c. **Programming languages**: You can use programming languages like Python, R, or Java to connect to your PostgreSQL database, retrieve data, and perform data analysis and visualization. Libraries like pandas (Python), dplyr (R), or JDBC (Java) can be used for this purpose.
+
+d. **Business Intelligence (BI) tools**: Some BI tools like Metabase, Redash, or Superset can connect to PostgreSQL databases and provide interactive dashboards, visualizations, and analytics capabilities.
+
+While these local options may not offer the same level of performance and scalability as Azure Synapse Analytics, they can still be useful for smaller-scale data analysis and reporting tasks during the development and prototyping phases of your project.
