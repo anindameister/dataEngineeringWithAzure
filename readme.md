@@ -647,7 +647,7 @@ FROM
     Account;
 
 ```
-
+![account and rider table are just one](https://github.com/anindameister/dataEngineeringWithAzure/blob/main/rowdata2columndata.JPG)
   - Payment: DimPayment
       - payment_id (INT PRIMARY KEY)
       - date (date)
