@@ -598,3 +598,120 @@ INSERT 0 4584921
 
 Query returned successfully in 1 min 41 secs.
 ```
+
+
+```
+CREATE TABLE DimRider (
+    rider_id INT PRIMARY KEY,
+    address VARCHAR(255),
+    first VARCHAR(100),
+    last VARCHAR(100),
+    birthday DATE
+);
+```
+```
+INSERT INTO DimRider (rider_id,address,first,last,birthday)
+SELECT
+    rider_id AS rider_id, 
+    address AS address,
+    first AS first,  -- Adjusted to the correct column name
+    last AS last,
+    birthday AS birthday
+FROM
+    Rider;
+```
+- result
+```
+INSERT 0 75000
+
+Query returned successfully in 1 secs 198 msec.
+```
+
+```
+CREATE TABLE DimAccount (
+    account_number INT PRIMARY KEY,
+    member BOOLEAN,
+    start_date DATE
+    end_date DATE
+);
+```
+- insert
+```
+INSERT INTO DimAccount (account_number,member,start_date,end_date)
+SELECT
+    account_number AS account_number, 
+    member AS member,
+    start_date AS start_date,  
+    end_date AS end_date,
+FROM
+    Account;
+
+```
+
+  - Payment: DimPayment
+      - payment_id (INT PRIMARY KEY)
+      - date (date)
+      - amount (decimal)
+
+```
+CREATE TABLE DimPayment (
+    payment_id INT PRIMARY KEY,
+    date DATE
+    amount DECIMAL(10, 2) 
+);
+```
+
+  - Station: DimStation
+      - station_id (varchar PRIMARY KEY)
+      - name (varchar)
+      - latitude (float)
+      - longitude (float)
+
+```
+CREATE TABLE DimStation (
+    station_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    latitude FLOAT,
+    longitude FLOAT
+);
+```
+
+  - Trip: DimTrip
+      - trip_id (varchar PRIMARY KEY)
+      <!-- There's a minor type mismatch for the rideable_type field in the Trip table, which should be VARCHAR to match the diagram instead of string. -->
+      - rideable_type (string)
+      - started_at (datetime)
+      - ended_at (datetime)
+
+```
+CREATE TABLE DimTrip (
+    trip_id VARCHAR(100) PRIMARY KEY,
+    rideable_type VARCHAR(100),
+    started_at TIMESTAMP,
+    ended_at TIMESTAMP
+);
+```
+
+my fact table
+
+FactRental
+rental_id (INT PRIMARY KEY)
+rider_id (INT)
+account_number (INT)
+payment_id (INT)
+trip_id (INT)
+start_station_id (INT)
+end_station_id (INT)
+
+
+```
+CREATE TABLE FactRental (
+    rental_id INT PRIMARY KEY,
+    rider_id INT,
+    account_number INT,
+    payment_id INT,
+    trip_id INT,
+    start_station_id INT,
+    end_station_id INT
+);
+```
