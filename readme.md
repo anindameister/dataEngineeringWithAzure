@@ -181,3 +181,50 @@ Certainly! Let's go through the steps one by one:
 Make sure to replace the placeholders (e.g., `YourDatabaseName`, `YourTableName`, `YourLinkedServiceName`, file paths) with your actual values throughout the process.
 
 After completing these steps, you should have your PostgreSQL data ingested into Azure Blob Storage and loaded into the Serverless SQL Pool within your Azure Synapse Workspace.
+
+In the SQL statement you provided:
+
+```sql
+CREATE EXTERNAL TABLE YourTableName
+WITH (
+    LOCATION = 'https://yourblobstorage.blob.core.windows.net/path/to/data/',
+    DATA_SOURCE = YourLinkedServiceName,
+    FILE_FORMAT = TextFileFormat
+)
+AS
+SELECT *
+FROM OPENROWSET(
+    BULK 'path/to/data/file.txt',
+    DATA_SOURCE = 'YourLinkedServiceName',
+    FORMAT = 'CSV'
+) AS DataFile;
+```
+
+The data files are not being uploaded directly. Instead, this statement is creating an external table in your Serverless SQL Pool that points to the data files already stored in your Azure Blob Storage.
+
+To upload the data files to Azure Blob Storage, you need to follow these steps:
+
+1. **Create a container in your Azure Blob Storage**:
+   - In the Azure Portal, go to your Azure Blob Storage account.
+   - Click on "Containers" and then "+ Container" to create a new container.
+   - Provide a name for the container and set the appropriate access level.
+
+2. **Upload the data files to the container**:
+   - Once the container is created, click on it to open it.
+   - Click "Upload" to upload your data files to the container.
+   - You can upload files individually or in bulk.
+
+3. **Get the path to the data files**:
+   - After uploading the files, you need to get the full path to each file.
+   - The path will be in the format: `https://yourstorageaccountname.blob.core.windows.net/containername/filename.txt`
+
+4. **Update the SQL statement**:
+   - In the SQL statement you provided, replace `'path/to/data/file.txt'` with the actual path to your data file in Azure Blob Storage.
+   - Also, replace `'YourLinkedServiceName'` with the name of the linked service you created between Azure Synapse and Azure Blob Storage.
+
+5. **Execute the SQL statement**:
+   - Run the SQL statement in your Serverless SQL Pool to create the external table pointing to the data files in Azure Blob Storage.
+
+After executing the SQL statement, you should have an external table in your Serverless SQL Pool that can query and access the data files stored in Azure Blob Storage.
+
+Note: If you have multiple data files, you'll need to create an external table for each file or use a wildcard to match multiple files (e.g., `'path/to/data/*.txt'`).
