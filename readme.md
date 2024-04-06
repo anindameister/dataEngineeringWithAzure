@@ -576,3 +576,25 @@ CREATE TABLE FactRental (
     end_station_id INT
 );
 ```
+- inserting the data
+
+trip_id VARCHAR(100) PRIMARY KEY,
+    rideable_type VARCHAR(100),
+    started_at TIMESTAMP,
+    ended_at TIMESTAMP
+```
+INSERT INTO DimTrip (trip_id, rideable_type, started_at, ended_at)
+SELECT
+    trip_id AS trip_id,
+    rideable_type AS rideable_type,
+    start_at AS started_at,  -- Adjusted to the correct column name
+    ended_at AS ended_at
+FROM
+    Trip;
+```
+- the result
+```
+INSERT 0 4584921
+
+Query returned successfully in 1 min 41 secs.
+```
