@@ -114,77 +114,70 @@ Based on your descriptions, Task 2, which involves designing a star schema using
 
 - In your Azure Synapse workspace, you will use the ingest wizard to create a one-time pipeline that ingests the data from PostgreSQL into Azure Blob Storage. This will result in all four tables being represented as text files in Blob Storage, ready for loading into the data warehouse.
 
-1. Create an Azure Synapse Workspace:
-Go to the Azure Portal (https://portal.azure.com)
-Click on "Create a resource"
-Search for "Azure Synapse Analytics"
-Click "Create"
-Provide the required details (Resource group, Workspace name, Region, etc.)
-Click "Review + create" and then "Create"
-2. Create a PostgreSQL Database within Azure:
-In the Azure Portal, click "Create a resource"
-Search for "Azure Database for PostgreSQL"
-Click "Create"
-Provide the required details (Resource group, Server name, Location, etc.)
-Set up the administrator user and password
-Click "Review + create" and then "Create"
-3. Create an Azure Blob Storage:
-In the Azure Portal, click "Create a resource"
-Search for "Storage account"
-Click "Create"
-Provide the required details (Resource group, Storage account name, Location, etc.)
-Click "Review + create" and then "Create"
-4. Create a Linked Service between Blob Storage and PostgreSQL:
-Open your Azure Synapse Workspace
-Go to the "Manage" hub
-Under "External connections," click "Linked services"
-Click "New"
-Search for the desired connector (e.g., "Azure Blob Storage" or "PostgreSQL")
-Select the connector and provide the required connection details
-Click "Create"
-5. Locate the Serverless SQL Pool in Azure Synapse and Upload the Data Files:
-In your Azure Synapse Workspace, go to the "Develop" hub
-Expand the "SQL script" section on the left
-Click on the "+" icon to create a new SQL script
-In the script editor, use the following command to create a new database:
-sql
+Certainly! Let's go through the steps one by one:
 
+1. **Create an Azure Synapse Workspace**:
+   - Go to the Azure Portal (https://portal.azure.com)
+   - Click on "Create a resource"
+   - Search for "Azure Synapse Analytics"
+   - Click "Create"
+   - Provide the required details (Resource group, Workspace name, Region, etc.)
+   - Click "Review + create" and then "Create"
 
-Copy code
-```
-CREATE DATABASE YourDatabaseName;
-```
-Switch to the newly created database using:
-sql
+2. **Create a PostgreSQL Database within Azure**:
+   - In the Azure Portal, click "Create a resource"
+   - Search for "Azure Database for PostgreSQL"
+   - Click "Create"
+   - Provide the required details (Resource group, Server name, Location, etc.)
+   - Set up the administrator user and password
+   - Click "Review + create" and then "Create"
 
+3. **Create an Azure Blob Storage**:
+   - In the Azure Portal, click "Create a resource"
+   - Search for "Storage account"
+   - Click "Create"
+   - Provide the required details (Resource group, Storage account name, Location, etc.)
+   - Click "Review + create" and then "Create"
 
-Copy code
-USE YourDatabaseName;
-Use the OPENROWSET function to import data from the PostgreSQL database into your Synapse SQL tables. For example:
-sql
+4. **Create a Linked Service between Blob Storage and PostgreSQL**:
+   - Open your Azure Synapse Workspace
+   - Go to the "Manage" hub
+   - Under "External connections," click "Linked services"
+   - Click "New"
+   - Search for the desired connector (e.g., "Azure Blob Storage" or "PostgreSQL")
+   - Select the connector and provide the required connection details
+   - Click "Create"
 
+5. **Locate the Serverless SQL Pool in Azure Synapse and Upload the Data Files**:
+   - In your Azure Synapse Workspace, go to the "Develop" hub
+   - Expand the "SQL script" section on the left
+   - Click on the "+" icon to create a new SQL script
+   - In the script editor, use the following command to create a new database:
+     ```sql
+     CREATE DATABASE YourDatabaseName;
+     ```
+   - Switch to the newly created database using:
+     ```sql
+     USE YourDatabaseName;
+     ```
+   - Use the `OPENROWSET` function to import data from the PostgreSQL database into your Synapse SQL tables. For example:
+     ```sql
+     CREATE EXTERNAL TABLE YourTableName
+     WITH (
+         LOCATION = 'https://yourblobstorage.blob.core.windows.net/path/to/data/',
+         DATA_SOURCE = YourLinkedServiceName,
+         FILE_FORMAT = TextFileFormat
+     )
+     AS
+     SELECT *
+     FROM OPENROWSET(
+         BULK 'path/to/data/file.txt',
+         DATA_SOURCE = 'YourLinkedServiceName',
+         FORMAT = 'CSV'
+     ) AS DataFile;
+     ```
+   - Replace `YourTableName`, `YourLinkedServiceName`, and the file paths with your actual values.
 
-Copy code
-CREATE EXTERNAL TABLE YourTableName
-WITH (
-    LOCATION = 'https://yourblobstorage.blob.core.windows.net/path/to/data/',
-    DATA_SOURCE = YourLinkedServiceName,
-    FILE_FORMAT = TextFileFormat
-)
-AS
-SELECT *
-FROM OPENROWSET(
-    BULK 'path/to/data/file.txt',
-    DATA_SOURCE = 'YourLinkedServiceName',
-    FORMAT = 'CSV'
-) AS DataFile;
-Replace YourTableName, YourLinkedServiceName, and the file paths with your actual values.
-Make sure to replace the placeholders (e.g., YourDatabaseName, YourTableName, YourLinkedServiceName, file paths) with your actual values throughout the process.
+Make sure to replace the placeholders (e.g., `YourDatabaseName`, `YourTableName`, `YourLinkedServiceName`, file paths) with your actual values throughout the process.
 
 After completing these steps, you should have your PostgreSQL data ingested into Azure Blob Storage and loaded into the Serverless SQL Pool within your Azure Synapse Workspace.
-
-Copy
-Retry
-
-
-Claude does not have the ability to run the code it generates yet.
