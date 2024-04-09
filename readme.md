@@ -638,23 +638,22 @@ CREATE TABLE DimAccount (
     end_date DATE
 );
 ```
-- insert
+- insert into new dimrider
 ```
 INSERT INTO DimRider (rider_id,address,first,last,birthday,account_start_date,account_end_date,is_member)
 SELECT
     rider_id AS rider_id, 
     address AS address,
-    first AS first,  
+    first AS first,  -- Adjusted to the correct column name
     last AS last,
     birthday AS birthday,
     account_start_date AS account_start_date,
     account_end_date AS account_end_date,
     is_member AS is_member
-
 FROM
     Rider;
-
 ```
+
 ![account and rider table are just one](https://github.com/anindameister/dataEngineeringWithAzure/blob/main/rowdata2columndata.JPG)
 
 ![account and rider table are just one](https://github.com/anindameister/dataEngineeringWithAzure/blob/main/endOf6April2024.JPG)
@@ -667,10 +666,28 @@ FROM
 
 ```
 CREATE TABLE DimPayment (
-    payment_id INT PRIMARY KEY,
+    payment_id as payment_id,
     date DATE
     amount DECIMAL(10, 2) 
 );
+```
+
+- insert into DimPayment
+
+```
+INSERT INTO DimPayment (payment_id,date, amount)
+SELECT
+    payment_id as payment_id,
+    date as date,
+    amount as amount
+FROM
+    Payment;
+```
+- result
+```
+INSERT 0 1946607
+
+Query returned successfully in 15 secs 127 msec.
 ```
 
   - Station: DimStation
@@ -681,11 +698,22 @@ CREATE TABLE DimPayment (
 
 ```
 CREATE TABLE DimStation (
-    station_id INT PRIMARY KEY,
+    station_id VARCHAR PRIMARY KEY,
     name VARCHAR(100),
     latitude FLOAT,
     longitude FLOAT
 );
+```
+- insert
+```
+INSERT INTO DimStation (station_id,name,latitude,longitude)
+SELECT
+    station_id as station_id,
+    name as name,
+    latitude as latitude,
+    longitude as longitude
+FROM
+    Station;
 ```
 
   - Trip: DimTrip
@@ -703,6 +731,17 @@ CREATE TABLE DimTrip (
     ended_at TIMESTAMP
 );
 ```
+- insert 
+```
+INSERT INTO DimTrip (trip_id,rideable_type,started_at,ended_at)
+SELECT
+trip_id as trip_id,rideable_type as rideable_type,start_at as started_at,ended_at as ended_at
+FROM
+    Trip;
+
+
+
+```
 
 my fact table
 
@@ -717,13 +756,252 @@ end_station_id (INT)
 
 
 ```
+
 CREATE TABLE FactRental (
     rental_id INT PRIMARY KEY,
     rider_id INT,
-    account_number INT,
+    
     payment_id INT,
-    trip_id INT,
-    start_station_id INT,
-    end_station_id INT
+    trip_id varchar,
+    start_station_id varchar,
+    end_station_id varchar
+    
 );
+```
+- insert
+
+```
+INSERT INTO FactRental (
+    rider_id,
+    payment_id,
+    trip_id,
+    start_station_id,
+    end_station_id
+)
+SELECT
+    tr.rider_id,          -- From the 'Trip' table
+    p.payment_id,         -- From the 'Payment' table
+    tr.trip_id,           -- From the 'Trip' table
+    tr.start_station_id,  -- From the 'Trip' table
+    tr.end_station_id     -- From the 'Trip' table
+FROM
+    Trip tr
+JOIN Rider r ON tr.rider_id = r.rider_id
+
+JOIN Payment p ON r.rider_id = p.rider_id  -- Payment linked to rider
+JOIN Station s1 ON tr.start_station_id = s1.station_id -- Start Station linked to Trip
+JOIN Station s2 ON tr.end_station_id = s2.station_id;  -- End Station linked to Trip
+```
+
+- insert
+```
+INSERT INTO FactRental (
+    rider_id,
+    payment_id,
+    trip_id,
+    start_station_id,
+    end_station_id
+)
+SELECT
+    tr.rider_id,          -- From the 'Trip' table
+    p.payment_id,         -- From the 'Payment' table
+    tr.trip_id,           -- From the 'Trip' table
+    tr.start_station_id,  -- From the 'Trip' table
+    tr.end_station_id     -- From the 'Trip' table
+FROM
+    Trip tr
+JOIN Rider r ON tr.rider_id = r.rider_id
+
+JOIN Payment p ON r.rider_id = p.rider_id  -- Payment linked to rider
+JOIN Station s1 ON tr.start_station_id = s1.station_id -- Start Station linked to Trip
+JOIN Station s2 ON tr.end_station_id = s2.station_id;  -- End Station linked to Trip
+```
+- result
+```
+ERROR:  Failing row contains (null, 22163, 547620, 8DFEA9BAFE6BAA62, 13253, TA1309000050).null value in column "rental_id" of relation "factrental" violates not-null constraint 
+
+ERROR:  null value in column "rental_id" of relation "factrental" violates not-null constraint
+SQL state: 23502
+Detail: Failing row contains (null, 22163, 547620, 8DFEA9BAFE6BAA62, 13253, TA1309000050).
+```
+- again to fix the above error
+
+```
+INSERT INTO FactRental (
+    rental_id,
+    rider_id,
+    payment_id,
+    trip_id,
+    start_station_id,
+    end_station_id
+)
+SELECT
+    UUID_GENERATE_V4(),   -- Generates a new UUID for the rental_id
+    tr.rider_id,          -- From the 'Trip' table
+    p.payment_id,         -- From the 'Payment' table
+    tr.trip_id,           -- From the 'Trip' table
+    tr.start_station_id,  -- From the 'Trip' table
+    tr.end_station_id     -- From the 'Trip' table
+FROM
+    Trip tr
+JOIN Rider r ON tr.rider_id = r.rider_id
+
+JOIN Payment p ON r.rider_id = p.rider_id  -- Payment linked to rider
+JOIN Station s1 ON tr.start_station_id = s1.station_id -- Start Station linked to Trip
+JOIN Station s2 ON tr.end_station_id = s2.station_id;  -- End Station linked to Trip
+```
+- error
+```
+ERROR:  function uuid_generate_v4() does not exist
+LINE 10:     UUID_GENERATE_V4(),   -- Generates a new UUID for the re...
+             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts. 
+
+SQL state: 42883
+Character: 138
+```
+- fix
+```
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+```
+- final fix
+```
+CREATE SEQUENCE rental_id_seq;
+```
+- query
+```
+INSERT INTO FactRental (
+    rental_id,
+    rider_id,
+    payment_id,
+    trip_id,
+    start_station_id,
+    end_station_id
+)
+SELECT
+    nextval('rental_id_seq'), -- Replace with your actual sequence name if different
+    tr.rider_id,
+    p.payment_id,
+    tr.trip_id,
+    tr.start_station_id,
+    tr.end_station_id
+FROM
+    Trip tr
+JOIN Rider r ON tr.rider_id = r.rider_id
+JOIN Payment p ON r.rider_id = p.rider_id  -- Ensure this join condition is correct
+JOIN Station s1 ON tr.start_station_id = s1.station_id
+JOIN Station s2 ON tr.end_station_id = s2.station_id;
+```
+
+- result
+```
+INSERT 0 117816784
+
+Query returned successfully in 35 min 5 secs.
+```
+- Analyze how much time is spent per ride
+        - Based on date and time factors such as day of week and time of day
+        - Based on which station is the starting and / or ending station
+        - Based on age of the rider at time of the ride
+        - Based on whether the rider is a member or a casual rider
+
+```
+SELECT
+    EXTRACT(DOW FROM tr.start_at) AS day_of_week,
+    EXTRACT(HOUR FROM tr.start_at) AS hour_of_day,
+    s1.name AS start_station_name,
+    s2.name AS end_station_name,
+    DATE_PART('year', AGE(tr.start_at, r.birthday)) AS rider_age,
+    r.is_member AS is_member,
+    AVG(EXTRACT(EPOCH FROM (tr.ended_at - tr.start_at)) / 60) AS average_ride_duration_minutes
+FROM
+    Trip tr
+JOIN Rider r ON tr.rider_id = r.rider_id
+JOIN Station s1 ON tr.start_station_id = s1.station_id
+JOIN Station s2 ON tr.end_station_id = s2.station_id
+GROUP BY
+    day_of_week,
+    hour_of_day,
+    start_station_name,
+    end_station_name,
+    rider_age,
+    is_member
+ORDER BY
+    day_of_week,
+    hour_of_day,
+    start_station_name,
+    end_station_name,
+    rider_age,
+    is_member;
+```
+
+- Analyze how much money is spent
+Per month, quarter, year
+Per member, based on the age of the rider at account start
+
+```
+SELECT
+    DATE_PART('year', p.date) AS year,
+    DATE_PART('quarter', p.date) AS quarter,
+    DATE_PART('month', p.date) AS month,
+    r.is_member AS membership_status,
+    DATE_PART('year', AGE(r.account_start_date, r.birthday)) AS age_at_account_start,
+    SUM(p.amount) AS total_spent
+FROM
+    Rider r
+JOIN Payment p ON r.rider_id = p.rider_id
+GROUP BY
+    year,
+    quarter,
+    month,
+    membership_status,
+    age_at_account_start
+ORDER BY
+    year,
+    quarter,
+    month,
+    membership_status,
+    age_at_account_start;
+
+```
+- EXTRA CREDIT - Analyze how much money is spent per member
+Based on how many rides the rider averages per month
+Based on how many minutes the rider spends on a bike per month
+
+```
+WITH MonthlyRides AS (
+    SELECT
+        r.rider_id,
+        DATE_TRUNC('month', tr.started_at) AS month,
+        COUNT(tr.trip_id) AS number_of_rides,
+        SUM(EXTRACT(EPOCH FROM (tr.ended_at - tr.started_at)) / 60) AS total_minutes
+    FROM
+        Trip tr
+    JOIN Rider r ON tr.rider_id = r.rider_id
+    GROUP BY r.rider_id, month
+),
+MonthlyPayments AS (
+    SELECT
+        r.rider_id,
+        DATE_TRUNC('month', p.date) AS month,
+        SUM(p.amount) AS total_spent
+    FROM
+        Payment p
+    JOIN Account a ON p.account_number = a.account_number
+    JOIN Rider r ON a.rider_id = r.rider_id
+    GROUP BY r.rider_id, month
+)
+SELECT
+    mp.rider_id,
+    mp.month,
+    mr.number_of_rides,
+    mr.total_minutes,
+    mp.total_spent,
+    COALESCE(mp.total_spent / NULLIF(mr.number_of_rides, 0), 0) AS avg_spent_per_ride,
+    COALESCE(mp.total_spent / NULLIF(mr.total_minutes, 0), 0) AS avg_spent_per_minute
+FROM
+    MonthlyPayments mp
+JOIN MonthlyRides mr ON mp.rider_id = mr.rider_id AND mp.month = mr.month
+ORDER BY mp.rider_id, mp.month;
 ```
