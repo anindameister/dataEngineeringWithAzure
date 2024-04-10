@@ -1005,3 +1005,146 @@ FROM
 JOIN MonthlyRides mr ON mp.rider_id = mr.rider_id AND mp.month = mr.month
 ORDER BY mp.rider_id, mp.month;
 ```
+
+- chatgpt
+```
+my dimension and fact tables are as follows
+
+CREATE TABLE DimRider (
+    rider_id INT PRIMARY KEY,
+    address VARCHAR(255),
+    first VARCHAR(100),
+    last VARCHAR(100),
+    birthday DATE,
+    account_start_date DATE,
+    account_end_date DATE,
+    is_member BOOLEAN
+);
+
+INSERT INTO DimRider (rider_id,address,first,last,birthday,account_start_date,account_end_date,is_member)
+SELECT
+    rider_id AS rider_id, 
+    address AS address,
+    first AS first,  -- Adjusted to the correct column name
+    last AS last,
+    birthday AS birthday,
+    account_start_date as account_start_date,
+    account_end_date as account_end_date,
+    is_member as is_member 
+FROM
+    Rider;
+
+CREATE TABLE DimPayment (
+    payment_id as payment_id,
+    date DATE
+    amount DECIMAL(10, 2) 
+);
+
+INSERT INTO DimPayment (payment_id,date, amount)
+SELECT
+    payment_id as payment_id,
+    date as date,
+    amount as amount
+FROM
+    Payment;
+
+
+CREATE TABLE DimStation (
+    station_id VARCHAR PRIMARY KEY,
+    name VARCHAR(100),
+    latitude FLOAT,
+    longitude FLOAT
+);
+
+INSERT INTO DimStation (station_id,name,latitude,longitude)
+SELECT
+    station_id as station_id,
+    name as name,
+    latitude as latitude,
+    longitude as longitude
+FROM
+    Station;
+
+CREATE TABLE DimTrip (
+    trip_id VARCHAR(100) PRIMARY KEY,
+    rideable_type VARCHAR(100),
+    started_at TIMESTAMP,
+    ended_at TIMESTAMP
+);
+
+INSERT INTO DimTrip (trip_id,rideable_type,started_at,ended_at)
+SELECT
+trip_id as trip_id,rideable_type as rideable_type,start_at as started_at,ended_at as ended_at
+FROM
+    Trip;
+
+
+CREATE TABLE FactRental (
+    rental_id INT PRIMARY KEY,
+    rider_id INT,
+    
+    payment_id INT,
+    trip_id varchar,
+    start_station_id varchar,
+    end_station_id varchar
+    
+);
+
+
+CREATE SEQUENCE rental_id_seq;
+
+INSERT INTO FactRental (
+    rental_id,
+    rider_id,
+    payment_id,
+    trip_id,
+    start_station_id,
+    end_station_id
+)
+SELECT
+    nextval('rental_id_seq'), -- Replace with your actual sequence name if different
+    tr.rider_id,
+    p.payment_id,
+    tr.trip_id,
+    tr.start_station_id,
+    tr.end_station_id
+FROM
+    Trip tr
+JOIN Rider r ON tr.rider_id = r.rider_id
+JOIN Payment p ON r.rider_id = p.rider_id  -- Ensure this join condition is correct
+JOIN Station s1 ON tr.start_station_id = s1.station_id
+JOIN Station s2 ON tr.end_station_id = s2.station_id;
+
+now , originally, the tables were given as the snap
+
+
+Now, in the fact and dimension tables the data types have been taken care off. Moreover, in the data files tables like account doesn't exist
+
+I was very much confident about the fact and dimension tables however, I forgot to consider the business outcomes and hence please modify my fact and dimension tables based on the below business outcomes
+
+1. Analyze how much time is spent per ride
+Based on date and time factors such as day of week and time of day
+Based on which station is the starting and / or ending station
+Based on age of the rider at time of the ride
+Based on whether the rider is a member or a casual rider
+2. Analyze how much money is spent
+Per month, quarter, year
+Per member, based on the age of the rider at account start
+3.Analyze how much money is spent per member
+Based on how many rides the rider averages per month
+Based on how many minutes the rider spends on a bike per month
+
+
+Moreover, in the data files tables like account doesn't exist
+
+
+so the account details are there within the rider table which is there in the snap
+so fix all of the fact and dimension tables based on the business outcomes
+
+Tell me what is wrong with my current table as well, moreover, also let me know if I have not mentioned a particular table
+
+Also write full queries so that I can copy and paste. Moreover, also gives queries to get the business outcomes
+
+```
+
+- results of Bard
