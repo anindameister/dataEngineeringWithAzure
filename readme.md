@@ -1035,9 +1035,9 @@ FROM
     Rider;
 
 CREATE TABLE DimPayment (
-    payment_id as payment_id,
-    date DATE
-    amount DECIMAL(10, 2) 
+    payment_id INT PRIMARY KEY,
+    date DATE,
+    amount DECIMAL(10, 2)
 );
 
 INSERT INTO DimPayment (payment_id,date, amount)
@@ -1147,4 +1147,1104 @@ Also write full queries so that I can copy and paste. Moreover, also gives queri
 
 ```
 
-- results of Bard
+- business outcomes
+
+
+
+1. Analyze how much time is spent per ride
+Based on date and time factors such as day of week and time of day
+Based on which station is the starting and / or ending station
+Based on age of the rider at time of the ride
+Based on whether the rider is a member or a casual rider
+
+```
+SELECT 
+    tr.trip_id,
+    EXTRACT(DOW FROM dt.started_at) AS day_of_week,
+    EXTRACT(HOUR FROM dt.started_at) AS hour_of_day,
+    st1.name AS start_station_name,
+    st2.name AS end_station_name,
+    AGE(dt.started_at, rd.birthday) AS rider_age_at_ride_time,
+    rd.is_member,
+    EXTRACT(EPOCH FROM (dt.ended_at - dt.started_at))/60 AS ride_duration_minutes
+FROM 
+    FactRental fr
+    INNER JOIN DimTrip dt ON fr.trip_id = dt.trip_id
+    INNER JOIN DimStation st1 ON fr.start_station_id = st1.station_id
+    INNER JOIN DimStation st2 ON fr.end_station_id = st2.station_id
+    INNER JOIN DimRider rd ON fr.rider_id = rd.rider_id;
+```
+1. Analyze how much time is spent per ride
+Based on date and time factors such as day of week and time of day
+Based on which station is the starting and / or ending station
+Based on age of the rider at time of the ride
+Based on whether the rider is a member or a casual rider
+
+2. Analyze how much money is spent
+Per month, quarter, year
+Per member, based on the age of the rider at account start
+
+3. Analyze how much money is spent per member
+Based on how many rides the rider averages per month
+Based on how many minutes the rider spends on a bike per month
+
+
+- in azure
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net' 
+	)
+GO
+
+
+CREATE EXTERNAL TABLE dbo.staging_payments (
+	[payment_id] INTEGER,
+	[date] date,
+	[amount] MONEY,
+	[rider_id] INTEGER
+	)
+	WITH (
+	LOCATION = 'payments.csv',
+	DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+	FILE_FORMAT = [SynapseDelimitedTextFormat]
+	)
+GO
+
+
+SELECT TOP 100 * FROM dbo.staging_payments
+GO
+```
+
+- riders
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net' 
+	)
+GO
+
+
+
+
+CREATE EXTERNAL TABLE dbo.riders (
+	[rider_id] INTEGER,
+	[first] VARCHAR(50),
+	[last] VARCHAR(50),
+	[address] VARCHAR(100),
+	[birthday] date,
+	[account_start_date] date,
+	[account_end_date] date,
+	[is_member] VARCHAR(5) 
+	)
+	WITH (
+	LOCATION = 'riders.csv',
+	DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+	FILE_FORMAT = [SynapseDelimitedTextFormat]
+	)
+GO
+
+
+SELECT TOP 100 * FROM dbo.riders
+GO
+```
+
+- stations
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net' 
+	)
+GO
+
+
+
+CREATE EXTERNAL TABLE dbo.stations (
+	[station_id] VARCHAR(50),
+	[name] VARCHAR(75),
+	[latitude] float,
+	[longitude] float
+	)
+	WITH (
+	LOCATION = 'stations.csv',
+	DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+	FILE_FORMAT = [SynapseDelimitedTextFormat]
+	)
+GO
+
+
+SELECT TOP 100 * FROM dbo.stations
+GO
+```
+- trips
+
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net' 
+	)
+GO
+
+CREATE EXTERNAL TABLE dbo.trips (
+	[trip_id] VARCHAR(50),
+	[rideable_type] VARCHAR(75),
+	[start_at] DATETIME2,
+	[ended_at] DATETIME2,
+	[start_station_id] VARCHAR(50),
+    [end_station_id] VARCHAR(50),
+	[rider_id] INTEGER
+	)
+	WITH (
+	LOCATION = 'trips.csv',
+	DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+	FILE_FORMAT = [SynapseDelimitedTextFormat]
+	)
+GO
+
+
+SELECT TOP 100 * FROM dbo.trips
+GO
+```
+- DimRider
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+IF OBJECT_ID('dbo.DimRider') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimRider];
+END
+
+CREATE EXTERNAL TABLE dbo.DimRider
+WITH (
+    LOCATION = 'DimRider',
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [rider_id] AS [rider_id],
+    [address] AS [address],
+    [first] AS [first],
+    [last] AS [last],
+    [birthday] AS [birthday],
+    [account_start_date] AS [account_start_date],
+    [account_end_date] AS [account_end_date],
+    [is_member] AS [is_member]
+FROM [dbo].[riders];
+GO
+
+
+SELECT TOP 100 * FROM dbo.DimRider;
+GO
+```
+- DimPayment
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+IF OBJECT_ID('dbo.DimPayment') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimPayment];
+END
+
+CREATE EXTERNAL TABLE dbo.DimPayment
+WITH (
+    LOCATION = 'DimPayment',
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [payment_id],
+    [date],
+    [amount]
+FROM [dbo].[staging_payments];
+GO
+
+SELECT TOP 100 * FROM dbo.DimPayment;
+GO
+```
+- DimStation
+
+```
+
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+IF OBJECT_ID('dbo.DimStation') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimStation];
+END
+
+CREATE EXTERNAL TABLE dbo.DimStation
+WITH (
+    LOCATION = 'DimStation',
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [station_id] AS [station_id],
+    [name] AS [name],
+    [latitude] AS [latitude],
+    [longitude] AS [longitude]
+FROM [dbo].[stations];
+GO
+
+SELECT TOP 100 * FROM dbo.DimStation;
+GO
+```
+- DimTrip
+```
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.DimTrip') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimTrip];
+END
+
+-- Create the external table dbo.DimTrip
+CREATE EXTERNAL TABLE dbo.DimTrip
+WITH (
+    LOCATION = 'DimTrip', -- Adjust the LOCATION to your actual data path
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [trip_id] AS [trip_id],
+    [rideable_type] AS [rideable_type],
+    [start_at] AS [started_at],
+    [ended_at] AS [ended_at]
+FROM [dbo].[Trips];
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.DimTrip;
+GO
+```
+- DimStations
+```
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.DimStations') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimStations];
+END
+
+-- Create the external table dbo.DimStations
+CREATE EXTERNAL TABLE dbo.DimStations
+WITH (
+    LOCATION = 'DimStations', -- Adjust the LOCATION to your actual data path
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [station_id] AS [station_id],
+    [name] AS [name],
+    [latitude] AS [latitude],
+    [longitude] AS [longitude]
+FROM [dbo].[Stations];
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.DimStations;
+GO
+```
+- fact table
+```
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.FactRental') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[FactRental];
+END
+
+-- Create the external table dbo.FactRental
+CREATE EXTERNAL TABLE dbo.FactRental
+WITH (
+    LOCATION = 'FactRental', -- Adjust the LOCATION to your actual data path
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS [rental_id],
+    [rider_id] AS [rider_id],
+    [payment_id] AS [payment_id],
+    [trip_id] AS [trip_id],
+    [start_station_id] AS [start_station_id],
+    [end_station_id] AS [end_station_id]
+FROM (
+    SELECT
+        tr.rider_id,
+        p.payment_id,
+        tr.trip_id,
+        tr.start_station_id,
+        tr.end_station_id
+    FROM
+        Trips tr
+    JOIN Riders r ON tr.rider_id = r.rider_id
+    JOIN staging_Payments p ON r.rider_id = p.rider_id -- Ensure this join condition is correct
+    JOIN Stations s1 ON tr.start_station_id = s1.station_id
+    JOIN Stations s2 ON tr.end_station_id = s2.station_id
+) AS SourceQuery;
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.FactRental;
+GO
+```
+
+- 2 fact tables
+
+```
+To fulfill the given requirement, we can create two fact tables: `FactTrip` and `FactPayment`, along with the necessary dimensions. Here's how we can structure the tables:
+
+1. **FactTrip**
+
+This fact table will store trip-related information, including the trip duration and the rider's age at the time of the trip.
+
+```sql
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.FactTrip') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[FactTrip];
+END
+
+-- Create the external table dbo.FactTrip
+CREATE EXTERNAL TABLE dbo.FactTrip
+WITH (
+    LOCATION = 'FactTrip', -- Adjust the LOCATION to your actual data path
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS [trip_id],
+    [rider_id],
+    [start_station_id],
+    [end_station_id],
+    [started_at],
+    [ended_at],
+    DATEDIFF(minute, [started_at], [ended_at]) AS [trip_duration_minutes],
+    DATEDIFF(year, r.[birthday], t.[started_at]) AS [rider_age_at_trip]
+FROM (
+    SELECT
+        tr.rider_id,
+        tr.start_station_id,
+        tr.end_station_id,
+        tr.start_at AS [started_at],
+        tr.ended_at AS [ended_at]
+    FROM
+        Trips tr
+    JOIN Riders r ON tr.rider_id = r.rider_id
+) AS SourceQuery;
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.FactTrip;
+GO
+```
+
+2. **FactPayment**
+
+This fact table will store payment-related information, including the payment amount.
+
+```sql
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.FactPayment') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[FactPayment];
+END
+
+-- Create the external table dbo.FactPayment
+CREATE EXTERNAL TABLE dbo.FactPayment
+WITH (
+    LOCATION = 'FactPayment', -- Adjust the LOCATION to your actual data path
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS [payment_id],
+    [rider_id],
+    [payment_date],
+    [payment_amount]
+FROM [dbo].[staging_Payments];
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.FactPayment;
+GO
+```
+
+3. **Shared Dimensions**
+
+Both fact tables will share the following dimensions:
+
+- `DimRider`: This dimension table stores rider information, including their address, name, birthday, account start and end dates, and membership status.
+- `DimStation`: This dimension table stores station information, including the station ID, name, latitude, and longitude.
+
+The existing `DimRider` and `DimStation` tables can be used as shared dimensions for both fact tables.
+
+With this structure, you can fulfill the business needs by querying the appropriate fact and dimension tables. For example, to analyze the trip duration based on various factors, you can join the `FactTrip` table with the relevant dimensions. Similarly, to analyze payment information, you can use the `FactPayment` table along with the shared dimensions.
+```
+- fact table 1
+```
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.FactTrip') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[FactTrip];
+END
+
+-- Create the external table dbo.FactTrip
+CREATE EXTERNAL TABLE dbo.FactTrip
+WITH (
+    LOCATION = 'FactTrip', -- Adjust the LOCATION to your actual data path
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS [trip_id],
+    t.[rider_id],
+    t.[start_station_id],
+    t.[end_station_id],
+    t.[started_at],
+    t.[ended_at],
+    DATEDIFF(minute, t.[started_at], t.[ended_at]) AS [trip_duration_minutes],
+    DATEDIFF(year, r.[birthday], t.[started_at]) AS [rider_age_at_trip]
+FROM (
+    SELECT
+        tr.rider_id,
+        tr.start_station_id,
+        tr.end_station_id,
+        tr.start_at AS [started_at],
+        tr.ended_at AS [ended_at]
+    FROM
+        Trips tr
+) t
+JOIN Riders r ON t.rider_id = r.rider_id;
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.FactTrip;
+GO
+```
+
+- fact table 2
+```
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.FactPayment') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[FactPayment];
+END
+
+-- Create the external table dbo.FactPayment
+CREATE EXTERNAL TABLE dbo.FactPayment
+WITH (
+    LOCATION = 'FactPayment', -- Adjust the LOCATION to your actual data path
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS [payment_id],
+    [rider_id],
+    [date] AS [payment_date],
+    [amount] AS [payment_amount]
+FROM [dbo].[staging_Payments];
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.FactPayment;
+GO
+```
+
+- success criteria 2
+```
+The star schema should have dimensions related to the trip fact table that are related to: riders, stations, and dates. The schema should have dimensions related to the payment fact table that are related to: dates and riders.
+```
+- claude
+```
+To address the requirements for the star schema, we can create the following dimensions:
+
+1. **Date Dimension**
+This dimension will be used for both the `FactTrip` and `FactPayment` tables to analyze data based on various date and time factors such as day of the week, month, quarter, and year.
+
+```sql
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.DimDate') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimDate];
+END
+
+-- Create the external table dbo.DimDate
+CREATE EXTERNAL TABLE dbo.DimDate
+WITH (
+    LOCATION = 'DimDate', -- Adjust the LOCATION to your actual data path
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [date] AS [date_key],
+    DATEPART(year, [date]) AS [year],
+    DATEPART(quarter, [date]) AS [quarter],
+    DATEPART(month, [date]) AS [month],
+    DATEPART(day, [date]) AS [day],
+    DATEPART(dayofyear, [date]) AS [day_of_year],
+    DATEPART(week, [date]) AS [calendar_week],
+    DATEPART(weekday, [date]) AS [day_of_week]
+FROM (
+    SELECT
+        DISTINCT [date]
+    FROM
+        [dbo].[staging_Payments]
+    UNION
+    SELECT
+        DISTINCT [start_at], [ended_at]
+    FROM
+        [dbo].[Trips]
+) AS SourceQuery;
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.DimDate;
+GO
+```
+
+This dimension table includes various date-related columns like year, quarter, month, day, day of the year, calendar week, and day of the week. The source data for this dimension is derived from the distinct dates present in the `staging_Payments` and `Trips` tables.
+
+2. **Station Dimension**
+This dimension will be used for the `FactTrip` table to analyze data based on the starting and ending stations.
+
+```sql
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.DimStation') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimStation];
+END
+
+-- Create the external table dbo.DimStation
+CREATE EXTERNAL TABLE dbo.DimStation
+WITH (
+    LOCATION = 'DimStation',
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [station_id] AS [station_id],
+    [name] AS [station_name],
+    [latitude] AS [latitude],
+    [longitude] AS [longitude]
+FROM [dbo].[stations];
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.DimStation;
+GO
+```
+
+The `DimStation` table remains the same as the one provided in the original code.
+
+3. **Rider Dimension**
+This dimension will be used for both the `FactTrip` and `FactPayment` tables to analyze data based on rider-related attributes like age, membership status, and account start date.
+
+```sql
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.DimRider') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimRider];
+END
+
+-- Create the external table dbo.DimRider
+CREATE EXTERNAL TABLE dbo.DimRider
+WITH (
+    LOCATION = 'DimRider',
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [rider_id] AS [rider_id],
+    [address] AS [address],
+    [first] AS [first_name],
+    [last] AS [last_name],
+    [birthday] AS [birthday],
+    DATEDIFF(year, [birthday], GETDATE()) AS [age],
+    [account_start_date] AS [account_start_date],
+    [account_end_date] AS [account_end_date],
+    [is_member] AS [is_member]
+FROM [dbo].[riders];
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.DimRider;
+GO
+```
+
+In this dimension table, we have added a calculated column `age` that determines the rider's age based on their `birthday` and the current date. This will help in analyzing data based on the rider's age at the time of the ride or account start.
+
+With these dimensions in place, you can perform various analyses by joining the fact tables (`FactTrip` and `FactPayment`) with the relevant dimensions. For example:
+
+1. To analyze the time spent per ride based on date, station, rider age, and membership status:
+   - Join `FactTrip` with `DimDate`, `DimStation`, and `DimRider`
+
+2. To analyze the money spent per month, quarter, year, and member's age at account start:
+   - Join `FactPayment` with `DimDate` and `DimRider`
+
+3. To analyze the money spent per member based on the number of rides and the total duration of rides:
+   - Join `FactPayment` with `FactTrip` and `DimRider`
+
+These
+```
+- Date Dimension
+```
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.DimDate') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimDate];
+END
+
+-- Create the external table dbo.DimDate
+CREATE EXTERNAL TABLE dbo.DimDate
+WITH (
+    LOCATION = 'DimDate', -- Adjust the LOCATION to your actual data path
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [date] AS [date_key],
+    DATEPART(year, [date]) AS [year],
+    DATEPART(quarter, [date]) AS [quarter],
+    DATEPART(month, [date]) AS [month],
+    DATEPART(day, [date]) AS [day],
+    DATEPART(dayofyear, [date]) AS [day_of_year],
+    DATEPART(week, [date]) AS [calendar_week],
+    DATEPART(weekday, [date]) AS [day_of_week]
+FROM (
+    SELECT
+        DISTINCT [date]
+    FROM
+        [dbo].[staging_Payments]
+    UNION
+    SELECT
+        DISTINCT [start_at]
+    FROM
+        [dbo].[Trips]
+) AS SourceQuery;
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.DimDate;
+GO
+```
+- Station Dimension(DimStatio)
+```
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.DimStatio') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimStatio];
+END
+
+-- Create the external table dbo.DimStation
+CREATE EXTERNAL TABLE dbo.DimStatio
+WITH (
+    LOCATION = 'DimStatio',
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [station_id] AS [station_id],
+    [name] AS [station_name],
+    [latitude] AS [latitude],
+    [longitude] AS [longitude]
+FROM [dbo].[stations];
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.DimStatio;
+GO
+```
+- DimRiders
+```
+-- Check and create external file format if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
+CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
+WITH (
+    FORMAT_TYPE = DELIMITEDTEXT,
+    FORMAT_OPTIONS (
+        FIELD_TERMINATOR = ',',
+        USE_TYPE_DEFAULT = FALSE
+    )
+)
+GO
+
+-- Check and create external data source if not exists
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'anindademo2_anindademo2_dfs_core_windows_net')
+CREATE EXTERNAL DATA SOURCE [anindademo2_anindademo2_dfs_core_windows_net]
+WITH (
+    LOCATION = 'abfss://anindademo2@anindademo2.dfs.core.windows.net'
+)
+GO
+
+-- Drop the external table if it exists
+IF OBJECT_ID('dbo.DimRiders') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimRider];
+END
+
+-- Create the external table dbo.DimRider
+CREATE EXTERNAL TABLE dbo.DimRiders
+WITH (
+    LOCATION = 'DimRiders',
+    DATA_SOURCE = [anindademo2_anindademo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [rider_id] AS [rider_id],
+    [address] AS [address],
+    [first] AS [first_name],
+    [last] AS [last_name],
+    [birthday] AS [birthday],
+    DATEDIFF(year, [birthday], GETDATE()) AS [age],
+    [account_start_date] AS [account_start_date],
+    [account_end_date] AS [account_end_date],
+    [is_member] AS [is_member]
+FROM [dbo].[riders];
+GO
+
+-- Select top 100 records to verify
+SELECT TOP 100 * FROM dbo.DimRiders;
+GO
+```
