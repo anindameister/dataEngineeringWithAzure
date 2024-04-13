@@ -2257,3 +2257,163 @@ Click on the "Add client IP" button on the toolbar (or the "+ Add current client
 If your IP address is dynamic and changes frequently, you can add a range of IP addresses that covers your current IP address and potential future IP addresses.
 After adding your IP address or range, click "Save" to apply the firewall rule changes.
 ```
+## 13April2023
+- staging_payments
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'udacitydemo2_udacitydemo2_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [udacitydemo2_udacitydemo2_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://udacitydemo2@udacitydemo2.dfs.core.windows.net' 
+	)
+GO
+
+CREATE EXTERNAL TABLE dbo.staging_payments (
+	[payment_id] nvarchar(4000),
+	[date] nvarchar(4000),
+	[amount] nvarchar(4000),
+	[rider_id] nvarchar(4000)
+	)
+	WITH (
+	LOCATION = 'publicpaymentdata.csv',
+	DATA_SOURCE = [udacitydemo2_udacitydemo2_dfs_core_windows_net],
+	FILE_FORMAT = [SynapseDelimitedTextFormat]
+	)
+GO
+
+
+SELECT TOP 100 * FROM dbo.staging_payments
+GO
+```
+- riders
+
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'udacitydemo2_udacitydemo2_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [udacitydemo2_udacitydemo2_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://udacitydemo2@udacitydemo2.dfs.core.windows.net' 
+	)
+GO
+
+CREATE EXTERNAL TABLE dbo.riders (
+	[rider_id] nvarchar(4000),
+	[first] nvarchar(4000),
+	[last] nvarchar(4000),
+	[address] nvarchar(4000),
+	[birthday] nvarchar(4000),
+	[account_start_date] nvarchar(4000),
+	[account_end_date] nvarchar(4000),
+	[is_member] nvarchar(4000)
+	)
+	WITH (
+	LOCATION = 'publicriderdata.csv',
+	DATA_SOURCE = [udacitydemo2_udacitydemo2_dfs_core_windows_net],
+	FILE_FORMAT = [SynapseDelimitedTextFormat]
+	)
+GO
+
+
+SELECT TOP 100 * FROM dbo.riders
+GO
+```
+- stations
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'udacitydemo2_udacitydemo2_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [udacitydemo2_udacitydemo2_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://udacitydemo2@udacitydemo2.dfs.core.windows.net' 
+	)
+GO
+
+
+
+CREATE EXTERNAL TABLE dbo.stations (
+	[station_id] nvarchar(4000),
+	[name] nvarchar(4000),
+	[latitude] nvarchar(4000),
+	[longitude] nvarchar(4000)
+	)
+	WITH (
+	LOCATION = 'publicstationdata.csv',
+	DATA_SOURCE = [udacitydemo2_udacitydemo2_dfs_core_windows_net],
+	FILE_FORMAT = [SynapseDelimitedTextFormat]
+	)
+GO
+
+
+SELECT TOP 100 * FROM dbo.stations
+GO
+```
+- DimRider
+```
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'udacitydemo2_udacitydemo2_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [udacitydemo2_udacitydemo2_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://udacitydemo2@udacitydemo2.dfs.core.windows.net' 
+	)
+GO
+
+
+IF OBJECT_ID('dbo.DimRider') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[DimRider];
+END
+
+CREATE EXTERNAL TABLE dbo.DimRider
+WITH (
+    LOCATION = 'DimRider',
+    DATA_SOURCE = [udacitydemo2_udacitydemo2_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [rider_id] AS [rider_id],
+    [address] AS [address],
+    [first] AS [first],
+    [last] AS [last],
+    [birthday] AS [birthday],
+    [account_start_date] AS [account_start_date],
+    [account_end_date] AS [account_end_date],
+    [is_member] AS [is_member]
+FROM [dbo].[riders];
+GO
+
+
+SELECT TOP 100 * FROM dbo.DimRider;
+GO
+```
