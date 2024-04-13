@@ -1773,9 +1773,10 @@ Both fact tables will share the following dimensions:
 The existing `DimRider` and `DimStation` tables can be used as shared dimensions for both fact tables.
 
 With this structure, you can fulfill the business needs by querying the appropriate fact and dimension tables. For example, to analyze the trip duration based on various factors, you can join the `FactTrip` table with the relevant dimensions. Similarly, to analyze payment information, you can use the `FactPayment` table along with the shared dimensions.
-```
+
 - fact table 1
 ```
+
 -- Check and create external file format if not exists
 IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat')
 CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat]
@@ -2247,4 +2248,12 @@ GO
 -- Select top 100 records to verify
 SELECT TOP 100 * FROM dbo.DimRiders;
 GO
+```
+- get data into postgres
+```
+Go to the Azure Portal and navigate to your Azure PostgreSQL server instance.
+Under the "Settings" section, click on "Connection Security".
+Click on the "Add client IP" button on the toolbar (or the "+ Add current client IP address" button).
+If your IP address is dynamic and changes frequently, you can add a range of IP addresses that covers your current IP address and potential future IP addresses.
+After adding your IP address or range, click "Save" to apply the firewall rule changes.
 ```
