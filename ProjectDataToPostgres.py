@@ -90,3 +90,18 @@ cursor.close()
 conn.close()
 
 print("All done!")
+
+- output
+
+# [Running] python -u "c:\Users\AnindaMaulik\Documents\udacity\6April2024\6april2024\dataEngineeringWithAzure\ProjectDataToPostgres.py"
+# Connection established
+# Connection established
+# Finished creating table rider
+# Finished populating rider
+# Finished creating table payment
+# Finished populating payment
+# Finished creating table station
+# Finished populating station
+# Finished creating table trip
+# Finished populating trip
+# All done!
