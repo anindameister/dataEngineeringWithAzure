@@ -5,7 +5,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 # Update connection string information #
 ########################################
 # host = "<<host>>"
-host = "udacitydemoc2.postgres.database.azure.com"
+host = "udacitydemo2.postgres.database.azure.com"
 # user = "<<user>>"
 user = "udacity"
 # password = "<<password>>"

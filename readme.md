@@ -2085,7 +2085,7 @@ With these dimensions in place, you can perform various analyses by joining the 
    - Join `FactPayment` with `FactTrip` and `DimRider`
 
 These
-```
+
 - Date Dimension
 ```
 -- Check and create external file format if not exists
